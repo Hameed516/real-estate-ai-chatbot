@@ -1,121 +1,68 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RE Chat — Demo (GitHub Pages)</title>
-<style>
-  body{font-family:Inter,system-ui,Segoe UI,Arial; background:#f4f6f8; margin:0}
-  .wrap{max-width:820px;margin:30px auto;padding:20px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
-  h1{margin:0 0 12px;font-size:20px}
-  #chat{height:420px;overflow:auto;border:1px solid #eee;padding:12px;border-radius:8px;background:#fafafa}
-  .msg{margin:8px 0;display:flex}
-  .user{justify-content:flex-end}
-  .bubble{max-width:80%;padding:10px 12px;border-radius:12px;background:#e2f0ff}
-  .bubble.user{background:#d8ffd8}
-  .input-row{display:flex;margin-top:12px;gap:8px}
-  input[type=text]{flex:1;padding:10px;border:1px solid #ddd;border-radius:8px}
-  button{padding:10px 14px;border-radius:8px;border:0;background:#0b72ff;color:#fff;cursor:pointer}
-  .small{font-size:12px;color:#666;margin-top:8px}
-  .listing{border:1px solid #e7e7e7;padding:8px;border-radius:8px;margin-top:6px;background:#fff}
-  .meta{font-size:13px;color:#444}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Real Estate AI Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 10px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    #chat {
+      border: 1px solid #ccc;
+      background: white;
+      height: 400px;
+      overflow-y: auto;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .msg {
+      margin: 8px 0;
+      line-height: 1.4;
+    }
+    .user {
+      color: #2980b9;
+      font-weight: bold;
+    }
+    .bot {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    #question {
+      width: 80%;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+    #sendBtn {
+      padding: 10px 15px;
+      font-size: 1em;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #sendBtn:hover {
+      background-color: #219150;
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>RE Chat — Real Estate Chatbot (Demo)</h1>
-  <div id="chat" aria-live="polite"></div>
+  <h1>Real Estate AI Chatbot</h1>
+  <div id="chat"></div>
+  <div style="text-align:center;">
+    <input type="text" id="question" placeholder="Ask ab
 
-  <div class="input-row">
-    <input id="text" type="text" placeholder="Ask example: 'show 3 bed houses under 350k in manchester'"/>
-    <button id="send">Send</button>
-  </div>
-  <div class="small">This demo uses a small sample dataset and keyword lookup. Works offline—perfect for a Foundera demo link.</div>
-</div>
-
-<script>
-const sampleListings = [
-  {id:1, title:"3-bed semi in Manchester", price:325000, beds:3, location:"Manchester", desc:"Lovely 3-bed near tram, garden", link:"#"},
-  {id:2, title:"2-bed flat in Birmingham", price:210000, beds:2, location:"Birmingham", desc:"City-centre flat, great transport", link:"#"},
-  {id:3, title:"4-bed detached in Leeds", price:520000, beds:4, location:"Leeds", desc:"Spacious family home, garage", link:"#"},
-  {id:4, title:"Studio in London SE", price:320000, beds:0, location:"London", desc:"Central studio ideal for rental", link:"#"},
-  {id:5, title:"3-bed terrace in Manchester", price:345000, beds:3, location:"Manchester", desc:"Refurbished, close to schools", link:"#"}
-];
-
-const chat = document.getElementById('chat');
-const text = document.getElementById('text');
-const send = document.getElementById('send');
-
-function addMessage(content, who='bot') {
-  const row = document.createElement('div');
-  row.className = 'msg ' + (who==='user' ? 'user' : 'bot');
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble ' + (who==='user' ? 'user' : '');
-  if (typeof content === 'string') bubble.innerText = content;
-  else bubble.appendChild(content); // for nodes
-  row.appendChild(bubble);
-  chat.appendChild(row);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function searchListings(query){
-  // basic parse: extract numbers (price), beds, location tokens
-  const q = query.toLowerCase();
-  const priceMatch = q.match(/under\s*(\d{3,6})k?/);
-  const numMatch = q.match(/(\d)\-? ?bed/);
-  const locs = ['manchester','london','leeds','birmingham'];
-  let priceLimit = priceMatch ? Number(priceMatch[1]) : null;
-  if(priceMatch && priceMatch[1].endsWith('k')===false && Number(priceMatch[1])<1000) { /* keep as is*/ }
-  // try to interpret if user wrote 350k
-  const kMatch = q.match(/(\d{2,3})k/);
-  if(kMatch) priceLimit = Number(kMatch[1])*1000;
-
-  let beds = numMatch ? Number(numMatch[1]) : null;
-  let loc = locs.find(l=> q.includes(l)) || null;
-
-  // filter
-  let results = sampleListings.filter(l=>{
-    if(priceLimit && l.price>priceLimit) return false;
-    if(beds!==null && (l.beds !== beds && !(beds===0 && l.beds===0))) return false;
-    if(loc && l.location.toLowerCase()!==loc) return false;
-    return true;
-  });
-  return {results, priceLimit, beds, loc};
-}
-
-send.addEventListener('click', handleSend);
-text.addEventListener('keydown', e=>{ if(e.key==='Enter') handleSend(); });
-
-function handleSend(){
-  const q = text.value.trim();
-  if(!q) return;
-  addMessage(q,'user');
-  text.value='';
-  // small bot processing
-  addMessage("Searching listings…");
-
-  setTimeout(()=>{
-    const {results, priceLimit, beds, loc} = searchListings(q);
-    chat.lastChild.remove(); // remove 'Searching listings…'
-    if(results.length===0){
-      addMessage("I couldn't find exact matches. Here are suggestions: Try '3 bed Manchester under 400k' or search city name.");
-      return;
-    }
-    const container = document.createElement('div');
-    results.forEach(r=>{
-      const div = document.createElement('div');
-      div.className='listing';
-      div.innerHTML = "<div class='meta'><strong>"+r.title+"</strong> — £"+r.price.toLocaleString()+"</div><div>"+r.desc+"</div><a href='"+r.link+"'>View</a>";
-      container.appendChild(div);
-    });
-    addMessage(container);
-    addMessage(`Found ${results.length} result(s). You can ask to 'book a viewing' or 'show more details' for a listing id.`, 'bot');
-  },600);
-}
-
-// example welcome
-addMessage("Hi — this is a demo real-estate chatbot. Try: 'show 3 bed houses under 350k in Manchester'.");
-</script>
-</body>
-</html>
 
